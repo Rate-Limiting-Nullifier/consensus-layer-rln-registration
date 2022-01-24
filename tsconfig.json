@@ -1,18 +1,28 @@
 {
     "compilerOptions": {
-        "target": "ES2018",
+        "target": "esnext",
         "module": "commonjs",
         "strict": true,
         "esModuleInterop": true,
         "outDir": "dist",
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "preserveConstEnums": true,
+        "sourceMap": true,
     },
     "include": [
+        "@/**/*.ts",
         "./scripts",
         "./test",
-        "./typechain-types"
+        "./typechain-types",
+        "./client/src/**/*.ts",
+        "./client/src/**/*.vue",
     ],
     "files": [
         "./hardhat.config.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
     ]
 }

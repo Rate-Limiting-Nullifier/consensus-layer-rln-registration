@@ -38,7 +38,7 @@ describe("RegistryContract", () => {
             expect(pubkey.length).to.equal(48);
             expect(idCommitment.length).to.equal(32);
             expect(signature.length).to.equal(96);
-        });
+        })
 
         it("should emit a single event", async () => {
             let registration_tx = await registryContract.register(pubkey, idCommitment, signature)
