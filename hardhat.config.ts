@@ -10,10 +10,13 @@ import { config as dotEnvConfig } from "dotenv"
 dotEnvConfig()
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || "";
+const HARDHAT_ACCOUNT = JSON.parse(process.env.HARDHAT_ACCOUNT || "");
+const TESTNET_PRIVATE_KEY = JSON.parse(process.env.HARDHAT_ACCOUNT)["privateKey"];
 const RINKEBY_PRIVATE_KEY =
     process.env.RINKEBY_PRIVATE_KEY! || process.env.ETHEREUM_PRIVATE_KEY ||
     "";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
+console.log(HARDHAT_ACCOUNT)
 
 const config = {
     defaultNetwork: "hardhat",
@@ -21,7 +24,9 @@ const config = {
         compilers: [{ version: "0.8.11", settings: {} }],
     },
     networks: {
-        hardhat: {},
+        hardhat: {
+            accounts: [HARDHAT_ACCOUNT],
+        },
         localhost: {},
         rinkeby: {
             url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,

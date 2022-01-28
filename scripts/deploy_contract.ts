@@ -1,40 +1,49 @@
-import { config as dotEnvConfig } from "dotenv";
-dotEnvConfig();
+import { ethers } from "hardhat";
+import fs from "fs";
+import path from "path";
 
-import { HardhatUserConfig } from "hardhat/types";
+const contract_address_filepath = path.join(__dirname, '../artifacts/contract_address.json')
 
-import "@nomiclabs/hardhat-waffle";
-import "@typechain/hardhat";
-import "@nomiclabs/hardhat-etherscan";
-import "solidity-coverage";
+async function main() {
+    const factory = await ethers.getContractFactory("Registry");
 
-const INFURA_API_KEY = process.env.INFURA_API_KEY || "";
-const RINKEBY_PRIVATE_KEY =
-    process.env.RINKEBY_PRIVATE_KEY! ||
-    "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3"; // well known private key
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+    // If we had constructor arguments, they would be passed into deploy()
+    let contract = await factory.deploy();
 
-const config: HardhatUserConfig = {
-    defaultNetwork: "hardhat",
-    solidity: {
-        compilers: [{ version: "0.7.6", settings: {} }],
-    },
-    networks: {
-        hardhat: {},
-        localhost: {},
-        rinkeby: {
-            url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
-            accounts: [RINKEBY_PRIVATE_KEY],
-        },
-        coverage: {
-            url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
-        },
-    },
-    etherscan: {
-        // Your API key for Etherscan
-        // Obtain one at https://etherscan.io/
-        apiKey: ETHERSCAN_API_KEY,
-    },
-};
+    // The address the newly deployed contract will have
+    console.log(
+        `The address the Contract WILL have once mined: ${contract.address}`
+    );
 
-export default config;
+    let addresses_json = new Object;
+
+    // Reads the `contract_address.json` file and parses it into a JSON object so if any other network addresses are stored there, they won't be overwritten
+    // TODO need to read contract_address.json in and parse it into a JSON object
+
+
+    // Adds the newly deployed contract's address to the JSON object
+    addresses_json = {
+        ...addresses_json, ...{ "hardhat": contract.address }
+    };
+
+    // Writes the JSON object of contract address(es) to the `contract_address.json` file
+    fs.writeFileSync(contract_address_filepath, JSON.stringify(addresses_json))
+
+    console.log(
+        `The transaction that was sent to the network to deploy the Contract: ${contract.deployTransaction.hash
+        }`
+    );
+
+    console.log(
+        'Waiting for transaction to complete...'
+    );
+    await contract.deployed();
+    console.log('Contract fully deployed!');
+}
+
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });

@@ -13,17 +13,24 @@
         "contract:compile": "npx hardhat compile",
         "contract:test": "npx hardhat test",
         "contract:coverage": "npm run contract:build && npx hardhat coverage --temp artifacts --network coverage",
+        "contract:deploy": "npx hardhat run --network localhost scripts/deploy_contract.ts",
+        "contract:node": "npx hardhat node",
         "client:build": "webpack --config ./client/webpack.config.js",
         "client:dev": "DEBUG=express:* nodemon --watch \"./client/dist/**/*\" --inspect --delay 1 ./client/dist/server.js",
         "client:watch": "NODE_ENV=development npm run client:build",
         "client:run": "node ./client/dist/server.js",
-        "build": "npm run contract:build && npm run client:build"
+        "client:test": "echo \"Error: no client test specified yet\"",
+        "build": "npm run contract:build && npm run client:build",
+        "test": "npm run contract:test && npm run client:test"
     },
     "author": "AtHeartEngineer <AtHeartEngineer@gmail.com> (https://github.com/AtHeartEngineer)",
     "license": "MIT",
     "dependencies": {
         "@chainsafe/bls-keygen": "^0.3.0",
+        "@zk-kit/identity": "^1.2.0",
+        "@zk-kit/protocols": "^1.2.4",
         "body-parser": "^1.19.1",
+        "circomlibjs": "^0.1.1",
         "cors": "^2.8.5",
         "express": "^4.17.2",
         "path": "^0.12.7"

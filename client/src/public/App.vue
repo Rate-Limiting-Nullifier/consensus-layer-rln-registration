@@ -1,30 +1,42 @@
 <script lang="ts">
 import { defineComponent, markRaw } from "vue";
-import { useStore } from './store'
-import { ethers } from "ethers";
-import * as Registry from '../../../artifacts/contracts/RLN_Registry.sol/Registry.json'
-import Navbar from "./components/Navbar.vue";
+import { ethers } from 'ethers';
 
-//
+/* import { ZkIdentity } from "@zk-kit/identity"
+import {
+  Semaphore,
+  MerkleProof,
+  IProof,
+  generateMerkleProof,
+  genExternalNullifier,
+  genSignalHash
+} from "@zk-kit/protocols"
+
+import { poseidon } from "circomlibjs" */
+
+import * as RegistryContract from '../../../artifacts/contracts/RLN_Registry.sol/Registry.json'
+import ContractAddress from '../../../artifacts/contract_address.json'
+
+// This just declares that the "ethereum" object may exist
+// on the window interface and has "any" type
 declare global {
   interface Window {
     ethereum?: any;
   }
 }
 
+// Creates the app component and sets up the store with
 export default defineComponent({
   name: "App",
   components: {
-    Navbar,
   },
-  setup() {
-    const store = useStore();
-    let contractAddress = "0x5fbdb2315678afecb367f032d93f642f64180aa3";
-    // connect to Metamask
-    let provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-    store.commit('setProvider', markRaw(provider));
+  created() {
+    this.contractAddress = ContractAddress['hardhat'] || null;
 
-    store.state.provider.on("network", (newNetwork: string, oldNetwork: string) => {
+    // connect to Metamask
+    this.provider = markRaw(new ethers.providers.Web3Provider(window.ethereum, "any"));
+
+    this.provider.on("network", (newNetwork: string, oldNetwork: string) => {
       // When a Provider makes its initial connection, it emits a "network"
       // event with a null oldNetwork along with the newNetwork. So, if the
       // oldNetwork exists, it represents a changing network
@@ -34,30 +46,129 @@ export default defineComponent({
       }
     });
 
-    // Saves the Signer to the store
-    store.state.provider.send("eth_requestAccounts", []).then(() => {
-      store.commit('setSigner', markRaw(store.state.provider.getSigner()))
-    });
-
-    // Saves the Address to the store for reference
-    store.state.signer.getAddress().then((address: string) => {
-      store.commit('setAddress', address);
-    });
-
-    // Saves the Registry contract to the store
-    store.commit('setRegistry', markRaw(new ethers.Contract(contractAddress, Registry.abi, store.state.provider)));
-
+    // THIS IS FOR TESTING
+    const randomBytes = ethers.utils.randomBytes;
+    this.pubkey = randomBytes(48)
+    this.idCommitment = randomBytes(32)
+    this.secret = "helloworld";
+    this.signature = randomBytes(96)
   },
-
+  data() {
+    return {
+      provider: <any>null,
+      signer: <any>null,
+      signerAddress: <any>null,
+      contractAddress: <any>null,
+      contract: <any>null,
+      pubkey: <any>null,
+      secret: <any>null,
+      idCommitment: <any>null,
+      signature: <any>null,
+      registration: <any>null,
+    }
+  },
   methods: {
+    async connect() {
+      // Establishes the signer and signerAddress
+      this.provider.send("eth_requestAccounts", []).then(() => {
+        this.signer = this.provider.getSigner()
+        this.signer.getAddress().then((address: string) => {
+          this.signerAddress = address;
+        });
+      });
+
+      // Saves a reference to the Registry contract
+      if (this.contractAddress) {
+        this.contract = markRaw(new ethers.Contract(this.contractAddress, RegistryContract.abi, this.provider.getSigner()));
+      }
+      else {
+        window.alert("UNABLE TO FIND CONTRACT ADDRESS, please run 'npm run contract:node' in a terminal and 'npm run contract:deploy' in another terminal to deploy the contract");
+      }
+    },
+    register() {
+      this.contract.register(this.pubkey_bytes, this.idCommitment_bytes, this.signature_bytes).then((tx: any) => {
+        console.log("REGISTRATION TRANSACTION: " + tx.hash);
+        this.pubkey = "";
+        this.idCommitment = "";
+        this.signature = "";
+        this.registration = tx.hash;
+      });
+    },
   },
+  computed: {
+    button_text(): string {
+      if (this.signerAddress != null) {
+        let txt = this.signerAddress.toString();
+        return txt.split("").slice(0, 7).join("") + "...";
+      } else {
+        return "CONNECT";
+      }
+    },
+    registration_disabled(): boolean {
+      if (this.pubkey == null || this.idCommitment == null || this.signature == null) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    },
+    connected(): boolean {
+      if (this.signerAddress != null) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    pubkey_bytes() {
+      let pubkey_bytes = ethers.utils.hexlify(this.pubkey);
+      console.log("pubkey byte length", ethers.utils.hexDataLength(pubkey_bytes));
+      return pubkey_bytes
+    },
+    idCommitment_bytes() {
+      let idCommitment_bytes = ethers.utils.hexlify(this.idCommitment);
+      console.log("idCommitment byte length", ethers.utils.hexDataLength(idCommitment_bytes));
+      return idCommitment_bytes
+    },
+    signature_bytes() {
+      let signature_bytes = ethers.utils.hexlify(this.signature);
+      console.log("signature byte length", ethers.utils.hexDataLength(signature_bytes));
+      return signature_bytes
+    },
+  }
 });
 
 console.log("RLN Private Beacon Chain Validator Messaging App loaded");
 </script>
 
 <template>
-  <Navbar></Navbar>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="navbar">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <img src="/images/eth-diamond-rainbow.png" height="24" alt="ETH2" />
+      </a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#">Home</a>
+          </li>
+        </ul>
+        <form class="d-flex">
+          <button class="btn" @click.prevent="connect()">{{ button_text }}</button>
+        </form>
+      </div>
+    </div>
+  </nav>
   <main class="container-fluid main-container">
     <div class="top-section pt-5 pb-4 mb-5 text-center">
       <img class="d-block mx-auto mb-5" src="/images/eth-diamond-rainbow.png" height="120px" />
@@ -83,9 +194,24 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
               id="pubkey"
               placeholder="0x..."
               maxlength="48"
+              v-model="pubkey"
             />
             <div class="invalid-feedback">Please enter a valid public key.</div>
             <small>BLS public key of the ETH2 validator (48 bytes)</small>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="idCommitment" class="form-label">Secret</label>
+            <textarea
+              type="text"
+              class="form-control"
+              id="secret"
+              placeholder="0x..."
+              maxlength="32"
+              v-model="secret"
+            />
+            <div class="invalid-feedback">Please enter a secret.</div>
+            <small>The secret will be hashed using the Posiedon Hash to generate the Identity Commitment</small>
           </div>
 
           <div class="col-12 mb-3">
@@ -96,6 +222,8 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
               id="idCommitment"
               placeholder="0x..."
               maxlength="32"
+              v-model="idCommitment"
+              disabled
             />
             <div class="invalid-feedback">Please enter a Identity Commitment.</div>
             <small>Identity commitment of the ETH2 validator (32 bytes)</small>
@@ -103,7 +231,14 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
 
           <div class="col-12 mb-3">
             <label for="sig" class="form-label">Signature</label>
-            <textarea type="text" class="form-control" id="sig" placeholder="0x..." maxlength="96" />
+            <textarea
+              type="text"
+              class="form-control"
+              id="sig"
+              placeholder="0x..."
+              maxlength="96"
+              v-model="signature"
+            />
             <div class="invalid-feedback">Please enter a valid signature.</div>
             <small>
               BLS signature of the Identity Commitment generated by the BLS
@@ -111,8 +246,15 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
             </small>
           </div>
 
-          <button class="w-100 btn btn-lg" type="submit">Register</button>
+          <button
+            v-if="connected"
+            class="w-100 btn btn-lg"
+            :disabled="registration_disabled"
+            @click.prevent="register()"
+          >Register</button>
+          <button v-else class="w-100 btn btn-lg" @click.prevent="connect">Connect to Metamask</button>
         </form>
+        <div v-if="registration" class="registration">Registration Submitted @ tx {{ registration }}</div>
       </div>
 
       <div class="right-col col-md-6">
@@ -190,6 +332,20 @@ main {
 
 .right-col {
   border-left: 1px solid var(--divider);
+}
+
+.bg-dark {
+  --bs-bg-opacity: 0 !important;
+}
+.navbar .container-fluid {
+  --bs-gutter-x: 2rem;
+}
+
+.registration {
+  word-wrap: anywhere;
+  font-size: 0.9rem;
+  padding: 1rem;
+  color: white;
 }
 </style>
 
@@ -278,7 +434,6 @@ label {
   color: var(--white) !important;
   text-shadow: 0px 0px 16px black;
   font-weight: 500 !important;
-  text-transform: uppercase;
   letter-spacing: 0.25rem;
   background: var(--btnbg);
   border: 2px solid rgba(134, 168, 231, 0.2) !important;

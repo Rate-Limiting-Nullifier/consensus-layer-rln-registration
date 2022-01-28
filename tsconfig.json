@@ -1,14 +1,15 @@
 {
     "compilerOptions": {
-        "target": "esnext",
+        "target": "ES2020",
         "module": "commonjs",
-        "strict": true,
+        "strict": false,
         "esModuleInterop": true,
         "outDir": "dist",
         "resolveJsonModule": true,
         "moduleResolution": "node",
         "preserveConstEnums": true,
         "sourceMap": true,
+        "noImplicitAny": false,
     },
     "include": [
         "@/**/*.ts",

@@ -1,13 +1,14 @@
+import { RLN } from "@zk-kit/protocols";
 
 enum ValidatorStatus {
     NOT_REGISTERED,
     REGISTERED,
-    BANNEDa
+    BANNED
 }
 
 export interface pubkey { }
 
-class RlnRegistrationEntry {
+export default class RlnRegistrationEntry {
     pubkey: string;
     idCommitment: string;
     signature: string;
@@ -34,5 +35,3 @@ class RlnRegistrationEntry {
     }
 
 }
-
-export default RlnRegistrationEntry;
