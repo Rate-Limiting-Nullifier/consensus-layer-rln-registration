@@ -14,6 +14,7 @@
     "include": [
         "@/**/*.ts",
         "./scripts",
+        "./deploy",
         "./test",
         "./typechain-types",
         "./client/src/**/*.ts",

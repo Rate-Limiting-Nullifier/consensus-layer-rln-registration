@@ -5,7 +5,6 @@ import registrationRouter from './routes/registration';
 import registerRouter from './routes/register';
 import slashedRouter from './routes/slashed';
 import path from 'path';
-import registryContract from './lib/registration';
 
 
 /**
@@ -15,7 +14,7 @@ import registryContract from './lib/registration';
  */
 
 const app = express();
-const PORT = 8000;
+const PORT = 2601;
 
 // CORS Options for use in Express
 const allowedOrigins = [`http://localhost:{PORT}`];
@@ -32,17 +31,8 @@ app.use(express.static(path.join(__dirname, 'public/')));
 
 // Routes
 app.use('/', rootRouter);
-app.use('/api/v1/register', registerRouter);
 app.use('/api/v1/getRegistration', registrationRouter);
 app.use('/api/v1/getSlashedMembers', slashedRouter);
-
-console.log(registryContract);
-
-registryContract.on('Registered', (pubkey, idCommitment, signature) => {
-    console.log("Registered Public Key: " + pubkey);
-    console.log("Registered ID Commitment: " + idCommitment);
-    console.log("Registered Signature: " + signature);
-});
 
 // Start server
 app.listen(PORT, () => {

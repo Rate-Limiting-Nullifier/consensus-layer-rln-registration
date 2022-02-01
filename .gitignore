@@ -3,6 +3,9 @@ cache/
 build/
 typechain-types/
 artifacts/
+deployments/localhost/
 coverage*
 .env
 _*
+ipfs/
+postgres/

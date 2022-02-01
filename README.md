@@ -1,10 +1,14 @@
-# Private message sharing for ETH2 validators
+# Private message sharing for ETH2 validators using the [RLN Construct](https://medium.com/privacy-scaling-explorations/rate-limiting-nullifier-a-spam-protection-mechanism-for-anonymous-environments-bbe4006a57d)
+
+💰 This work is sponsored by the Ethereum Foundation through a [grant](https://hackmd.io/BRda81jvTf6OC7HUYiYSvA).
+
+## Overview
 
 ## Using this Project
 
-### Setup
+### Setup for development
 
-1. Clone this repository `git clone {this repository}` _#TODO fill in repo address_
+1. Clone this repository `git clone https://github.com/AtHeartEngineering/rln-validator-messaging`
 2. install the dependencies with `npm install`
 3. Build with `npm run build`.
 

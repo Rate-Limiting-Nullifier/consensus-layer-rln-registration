@@ -15,7 +15,13 @@ import {
 import { poseidon } from "circomlibjs" */
 
 import * as RegistryContract from '../../../artifacts/contracts/RLN_Registry.sol/Registry.json'
-import ContractAddress from '../../../artifacts/contract_address.json'
+
+// Setups the registry contract address for each network
+import hardhat_deployment from '../../../deployments/localhost/Registry.json'
+import rinkeby_deployment from '../../../deployments/rinkeby/Registry.json'
+
+// !TODO This is a placeholder until the contract is deployed to mainnet
+const mainnet_deployment = { "address": null }
 
 // This just declares that the "ethereum" object may exist
 // on the window interface and has "any" type
@@ -31,8 +37,6 @@ export default defineComponent({
   components: {
   },
   created() {
-    this.contractAddress = ContractAddress['hardhat'] || null;
-
     // connect to Metamask
     this.provider = markRaw(new ethers.providers.Web3Provider(window.ethereum, "any"));
 
@@ -46,16 +50,46 @@ export default defineComponent({
       }
     });
 
-    // THIS IS FOR TESTING
+    // Get the network ID
+    this.provider.getNetwork().then(network => {
+      this.network = network.chainId;
+      this.network_name = network.name;
+
+      // This assigns the correct Contract address for the network
+      switch (this.network) {
+        case 1: {
+          this.contractAddress = mainnet_deployment.address;
+          break;
+        }
+        case 4: {
+          this.contractAddress = rinkeby_deployment.address;
+          break;
+        }
+        case 31337: {
+          this.contractAddress = hardhat_deployment.address;
+          this.network_name = "Hardhat";
+          break;
+        }
+        default: {
+          this.contractAddress = null;
+          break;
+        }
+      }
+    });
+
+
+
+    // !TODO This is for testing purposes only
     const randomBytes = ethers.utils.randomBytes;
     this.pubkey = randomBytes(48)
     this.idCommitment = randomBytes(32)
-    this.secret = "helloworld";
     this.signature = randomBytes(96)
   },
   data() {
     return {
       provider: <any>null,
+      network: <any>null,
+      network_name: <string>null,
       signer: <any>null,
       signerAddress: <any>null,
       contractAddress: <any>null,
@@ -121,17 +155,14 @@ export default defineComponent({
     },
     pubkey_bytes() {
       let pubkey_bytes = ethers.utils.hexlify(this.pubkey);
-      console.log("pubkey byte length", ethers.utils.hexDataLength(pubkey_bytes));
       return pubkey_bytes
     },
     idCommitment_bytes() {
       let idCommitment_bytes = ethers.utils.hexlify(this.idCommitment);
-      console.log("idCommitment byte length", ethers.utils.hexDataLength(idCommitment_bytes));
       return idCommitment_bytes
     },
     signature_bytes() {
       let signature_bytes = ethers.utils.hexlify(this.signature);
-      console.log("signature byte length", ethers.utils.hexDataLength(signature_bytes));
       return signature_bytes
     },
   }
@@ -163,6 +194,7 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
             <a class="nav-link active" aria-current="page" href="#">Home</a>
           </li>
         </ul>
+        <span class="badge rounded-pill bg-secondary me-3">{{ network_name }}</span>
         <form class="d-flex">
           <button class="btn" @click.prevent="connect()">{{ button_text }}</button>
         </form>

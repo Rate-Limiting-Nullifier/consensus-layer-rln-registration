@@ -9,7 +9,11 @@ import "hardhat/console.sol";
  * @notice The registry contract used by ETH2 validators to register in the private chat
  */
 contract Registry {
-    event Registered(bytes pubkey, bytes idCommitment, bytes signature);
+    event Registered(
+        bytes indexed pubkey,
+        bytes indexed idCommitment,
+        bytes signature
+    );
 
     /**
      * @notice Record the registration related parameters in the blockchain's logs and emit Registration event

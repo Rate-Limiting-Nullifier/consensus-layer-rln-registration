@@ -21,7 +21,7 @@ describe("RegistryContract", () => {
         const signers = await ethers.getSigners()
         const registryFactory = await ethers.getContractFactory('Registry', signers[0])
 
-        registryContract = await registryFactory.deploy()
+        const registryContract = await registryFactory.deploy()
         await registryContract.deployed()
 
         expect(registryContract.address).to.properAddress
