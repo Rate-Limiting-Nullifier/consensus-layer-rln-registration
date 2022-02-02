@@ -1,6 +1,8 @@
 <script lang="ts">
 import { defineComponent, markRaw } from "vue";
 import { ethers } from 'ethers';
+import { poseidon } from "circomlib";
+
 
 /* import { ZkIdentity } from "@zk-kit/identity"
 import {
@@ -37,53 +39,7 @@ export default defineComponent({
   components: {
   },
   created() {
-    // connect to Metamask
-    this.provider = markRaw(new ethers.providers.Web3Provider(window.ethereum, "any"));
 
-    this.provider.on("network", (newNetwork: string, oldNetwork: string) => {
-      // When a Provider makes its initial connection, it emits a "network"
-      // event with a null oldNetwork along with the newNetwork. So, if the
-      // oldNetwork exists, it represents a changing network
-      if (oldNetwork) {
-        console.log(newNetwork);
-        window.location.reload();
-      }
-    });
-
-    // Get the network ID
-    this.provider.getNetwork().then(network => {
-      this.network = network.chainId;
-      this.network_name = network.name;
-
-      // This assigns the correct Contract address for the network
-      switch (this.network) {
-        case 1: {
-          this.contractAddress = mainnet_deployment.address;
-          break;
-        }
-        case 4: {
-          this.contractAddress = rinkeby_deployment.address;
-          break;
-        }
-        case 31337: {
-          this.contractAddress = hardhat_deployment.address;
-          this.network_name = "Hardhat";
-          break;
-        }
-        default: {
-          this.contractAddress = null;
-          break;
-        }
-      }
-    });
-
-
-
-    // !TODO This is for testing purposes only
-    const randomBytes = ethers.utils.randomBytes;
-    this.pubkey = randomBytes(48)
-    this.idCommitment = randomBytes(32)
-    this.signature = randomBytes(96)
   },
   data() {
     return {
@@ -99,10 +55,52 @@ export default defineComponent({
       idCommitment: <any>null,
       signature: <any>null,
       registration: <any>null,
+      pubkey_query: <any>null,
+      verified: [],
     }
   },
   methods: {
     async connect() {
+      // connect to Metamask
+      this.provider = markRaw(new ethers.providers.Web3Provider(window.ethereum, "any"));
+
+      this.provider.on("network", (newNetwork: string, oldNetwork: string) => {
+        // When a Provider makes its initial connection, it emits a "network"
+        // event with a null oldNetwork along with the newNetwork. So, if the
+        // oldNetwork exists, it represents a changing network
+        if (oldNetwork) {
+          console.log(newNetwork);
+          window.location.reload();
+        }
+      });
+
+      // Get the network ID
+      this.provider.getNetwork().then(network => {
+        this.network = network.chainId;
+        this.network_name = network.name;
+
+        // This assigns the correct Contract address for the network
+        switch (this.network) {
+          case 1: {
+            this.contractAddress = mainnet_deployment.address;
+            break;
+          }
+          case 4: {
+            this.contractAddress = rinkeby_deployment.address;
+            break;
+          }
+          case 31337: {
+            this.contractAddress = hardhat_deployment.address;
+            this.network_name = "Hardhat";
+            break;
+          }
+          default: {
+            this.contractAddress = null;
+            break;
+          }
+        }
+      });
+
       // Establishes the signer and signerAddress
       this.provider.send("eth_requestAccounts", []).then(() => {
         this.signer = this.provider.getSigner()
@@ -128,6 +126,20 @@ export default defineComponent({
         this.registration = tx.hash;
       });
     },
+    generate_random() {
+      // This is for testing purposes only
+      const randomBytes = ethers.utils.randomBytes;
+      const hexlify = ethers.utils.hexlify;
+      this.pubkey = hexlify(randomBytes(48));
+      this.idCommitment = hexlify(randomBytes(32));
+      this.signature = hexlify(randomBytes(96));
+    },
+    query_registration() {
+      fetch('/api/v1/getRegistration/' + this.pubkey_query).then(response => response.json()).then(data => {
+        console.log(data);
+        this.verified[this.pubkey_query] = data;
+      });
+    }
   },
   computed: {
     button_text(): string {
@@ -153,18 +165,11 @@ export default defineComponent({
         return false;
       }
     },
-    pubkey_bytes() {
-      let pubkey_bytes = ethers.utils.hexlify(this.pubkey);
-      return pubkey_bytes
-    },
-    idCommitment_bytes() {
-      let idCommitment_bytes = ethers.utils.hexlify(this.idCommitment);
-      return idCommitment_bytes
-    },
-    signature_bytes() {
-      let signature_bytes = ethers.utils.hexlify(this.signature);
-      return signature_bytes
-    },
+    calculatedIdCommitment() {
+      return (inputs: BigInt[]): BigInt => {
+        return poseidon(inputs);
+      }
+    }
   }
 });
 
@@ -215,10 +220,13 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
 
     <div class="row">
       <div class="left-col col-md-6">
-        <h4 class="mb-3">Register</h4>
+        <h4 class="mb-3">
+          Register
+          <span class="btn btn-sm" @click.prevent="generate_random">random</span>
+        </h4>
         <hr class="my-3" />
         <form>
-          <div class="col-12 mb-3">
+          <div class="col-12 mb-3" id="pubkey-wrapper">
             <label for="pubkey" class="form-label">Public Key</label>
             <textarea
               type="text"
@@ -232,21 +240,22 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
             <small>BLS public key of the ETH2 validator (48 bytes)</small>
           </div>
 
-          <div class="col-12 mb-3">
+          <div class="col-12 mb-3" id="secret-wrapper">
             <label for="idCommitment" class="form-label">Secret</label>
             <textarea
               type="text"
               class="form-control"
               id="secret"
-              placeholder="0x..."
+              placeholder="0x...Not yet implemented"
               maxlength="32"
               v-model="secret"
+              disabled
             />
             <div class="invalid-feedback">Please enter a secret.</div>
             <small>The secret will be hashed using the Posiedon Hash to generate the Identity Commitment</small>
           </div>
 
-          <div class="col-12 mb-3">
+          <div class="col-12 mb-3" id="idCommitment-wrapper">
             <label for="idCommitment" class="form-label">Identity Commitment</label>
             <textarea
               type="text"
@@ -255,18 +264,17 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
               placeholder="0x..."
               maxlength="32"
               v-model="idCommitment"
-              disabled
             />
             <div class="invalid-feedback">Please enter a Identity Commitment.</div>
             <small>Identity commitment of the ETH2 validator (32 bytes)</small>
           </div>
 
-          <div class="col-12 mb-3">
+          <div class="col-12 mb-3" id="signature-wrapper">
             <label for="sig" class="form-label">Signature</label>
             <textarea
               type="text"
               class="form-control"
-              id="sig"
+              id="signature"
               placeholder="0x..."
               maxlength="96"
               v-model="signature"
@@ -298,16 +306,22 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
             <textarea
               type="text"
               class="form-control"
-              id="pubkey"
+              id="pubkey_query"
               placeholder="0x..."
               maxlength="48"
+              v-model="pubkey_query"
             />
             <div class="invalid-feedback">Please enter a valid public key.</div>
             <small>BLS public key of the ETH2 validator (48 bytes)</small>
           </div>
 
-          <button class="w-100 btn btn-lg" type="submit">Search</button>
+          <button class="w-100 btn btn-lg" @click.prevent="query_registration">Search</button>
         </form>
+        <ul>
+          <li v-for="(status, index) in verified">
+            <span>{{ status }}</span>
+          </li>
+        </ul>
       </div>
     </div>
   </main>
