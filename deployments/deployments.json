@@ -1,0 +1,124 @@
+{
+  "4": [
+    {
+      "name": "rinkeby",
+      "chainId": "4",
+      "contracts": {
+        "Registry": {
+          "address": "0x2dade4195A43037e391D5004D96d0914Bfad0C88",
+          "abi": [
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": false,
+                  "internalType": "bytes",
+                  "name": "pubkey",
+                  "type": "bytes"
+                },
+                {
+                  "indexed": false,
+                  "internalType": "bytes",
+                  "name": "idCommitment",
+                  "type": "bytes"
+                },
+                {
+                  "indexed": false,
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "Registered",
+              "type": "event"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes",
+                  "name": "pubkey",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "idCommitment",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "register",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "31337": [
+    {
+      "name": "hardhat",
+      "chainId": "31337",
+      "contracts": {
+        "Registry": {
+          "address": "0x9a1AA3EBB67161Ac2eb95A96219b8828c0A5d22a",
+          "abi": [
+            {
+              "anonymous": false,
+              "inputs": [
+                {
+                  "indexed": false,
+                  "internalType": "bytes",
+                  "name": "pubkey",
+                  "type": "bytes"
+                },
+                {
+                  "indexed": false,
+                  "internalType": "bytes",
+                  "name": "idCommitment",
+                  "type": "bytes"
+                },
+                {
+                  "indexed": false,
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "Registered",
+              "type": "event"
+            },
+            {
+              "inputs": [
+                {
+                  "internalType": "bytes",
+                  "name": "pubkey",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "idCommitment",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "bytes",
+                  "name": "signature",
+                  "type": "bytes"
+                }
+              ],
+              "name": "register",
+              "outputs": [],
+              "stateMutability": "nonpayable",
+              "type": "function"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

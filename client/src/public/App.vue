@@ -1,21 +1,9 @@
 <script lang="ts">
 import { defineComponent, markRaw } from "vue";
 import { ethers } from 'ethers';
-import { poseidon } from "circomlib";
-
-
-/* import { ZkIdentity } from "@zk-kit/identity"
-import {
-  Semaphore,
-  MerkleProof,
-  IProof,
-  generateMerkleProof,
-  genExternalNullifier,
-  genSignalHash
-} from "@zk-kit/protocols"
-
-import { poseidon } from "circomlibjs" */
-
+import { ZkIdentity } from "@zk-kit/identity"
+import { init } from "@chainsafe/bls";
+import { bls } from "@chainsafe/bls/browser";
 import * as RegistryContract from '../../../artifacts/contracts/RLN_Registry.sol/Registry.json'
 
 // Setups the registry contract address for each network
@@ -24,6 +12,9 @@ import rinkeby_deployment from '../../../deployments/rinkeby/Registry.json'
 
 // !TODO This is a placeholder until the contract is deployed to mainnet
 const mainnet_deployment = { "address": null }
+
+const randomBytes = ethers.utils.randomBytes;
+const hexlify = ethers.utils.hexlify;
 
 // This just declares that the "ethereum" object may exist
 // on the window interface and has "any" type
@@ -39,19 +30,32 @@ export default defineComponent({
   components: {
   },
   created() {
+    // Generates a Zero Knowledge Identity
+    this.identity = new ZkIdentity();
 
+    // Initializes the BLS library
+    (async () => {
+      console.log("Initializing BLS");
+      await init("herumi");
+      console.log("BLS initialized");
+      this.bls = bls
+    })();
+    this.generate_idCommitment();
   },
   data() {
     return {
+      bls: <any>null,
       provider: <any>null,
       network: <any>null,
       network_name: <string>null,
       signer: <any>null,
-      signerAddress: <any>null,
-      contractAddress: <any>null,
+      signerAddress: <string>null,
+      contractAddress: <string>null,
       contract: <any>null,
+      identity: <any>null,
+      secretkey: <any>null,
+      privkey: <any>null,
       pubkey: <any>null,
-      secret: <any>null,
       idCommitment: <any>null,
       signature: <any>null,
       registration: <any>null,
@@ -99,6 +103,16 @@ export default defineComponent({
             break;
           }
         }
+
+        // Saves a reference to the Registry contract
+        if (this.contractAddress) {
+          this.contract = markRaw(new ethers.Contract(this.contractAddress, RegistryContract.abi, this.provider.getSigner()));
+        }
+        else {
+          window.alert("UNABLE TO FIND CONTRACT ADDRESS, please run 'npm run contract:node' in a terminal and 'npm run contract:deploy' in another terminal to deploy the contract");
+        }
+
+        console.log("Contract Address set to: " + this.contractAddress);
       });
 
       // Establishes the signer and signerAddress
@@ -108,37 +122,58 @@ export default defineComponent({
           this.signerAddress = address;
         });
       });
-
-      // Saves a reference to the Registry contract
-      if (this.contractAddress) {
-        this.contract = markRaw(new ethers.Contract(this.contractAddress, RegistryContract.abi, this.provider.getSigner()));
-      }
-      else {
-        window.alert("UNABLE TO FIND CONTRACT ADDRESS, please run 'npm run contract:node' in a terminal and 'npm run contract:deploy' in another terminal to deploy the contract");
-      }
     },
     register() {
-      this.contract.register(this.pubkey_bytes, this.idCommitment_bytes, this.signature_bytes).then((tx: any) => {
+      console.log("Registering with:");
+      console.log(`  Public Key    :  ${this.pubkey} Bytes: ${(this.pubkey.length - 2) / 2}`);
+      console.log(`  ID Commitment :  ${this.idCommitment} Bytes: ${(this.idCommitment.length - 2) / 2}`);
+      console.log(`  Signature     :  ${this.signature} Bytes: ${(this.signature.length - 2) / 2}`);
+
+      this.contract.register(this.pubkey, this.idCommitment, this.signature).then((tx: any) => {
         console.log("REGISTRATION TRANSACTION: " + tx.hash);
-        this.pubkey = "";
-        this.idCommitment = "";
-        this.signature = "";
         this.registration = tx.hash;
       });
     },
-    generate_random() {
-      // This is for testing purposes only
-      const randomBytes = ethers.utils.randomBytes;
-      const hexlify = ethers.utils.hexlify;
-      this.pubkey = hexlify(randomBytes(48));
-      this.idCommitment = hexlify(randomBytes(32));
-      this.signature = hexlify(randomBytes(96));
+    generate_random_key() {
+      this.secretkey = this.bls.SecretKey.fromKeygen();
+      this.privkey = hexlify(this.secretkey.toBytes());
+    },
+    generate_from_key() {
+      this.secretkey = this.bls.SecretKey.fromHex(this.privkey);
+    },
+    generate_pubkey_and_sign() {
+      if (this.secretkey) {
+        console.log("Generating public key from secret key");
+        this.pubkey = hexlify(this.secretkey.toPublicKey().toBytes());
+        console.log("Generating signature from secret key and id commitment");
+        this.signature = hexlify(this.secretkey.sign(hexlify(this.idCommitment)).toBytes());
+      }
+      else if (this.privkey) {
+        try {
+          console.log("Generating secretkey from private key");
+          this.generate_from_key();
+          console.log("Generating public key from private key");
+          this.pubkey = hexlify(this.secretkey.toPublicKey().toBytes());
+
+          console.log("Generating signature from secret key and id commitment");
+          this.signature = hexlify(this.secretkey.sign(hexlify(this.idCommitment)).toBytes());
+        }
+        catch (e) {
+          this.pubkey = "Couldn't generate keys from BLS Private Key, see console for error";
+          console.log(e);
+        }
+      }
+      else {
+        this.pubkey = "couldn't generate pubkey without a private key being set";
+      }
     },
     query_registration() {
       fetch('/api/v1/getRegistration/' + this.pubkey_query).then(response => response.json()).then(data => {
-        console.log(data);
         this.verified[this.pubkey_query] = data;
       });
+    },
+    generate_idCommitment() {
+      this.idCommitment = hexlify(this.identity.genIdentityCommitment())
     }
   },
   computed: {
@@ -165,11 +200,6 @@ export default defineComponent({
         return false;
       }
     },
-    calculatedIdCommitment() {
-      return (inputs: BigInt[]): BigInt => {
-        return poseidon(inputs);
-      }
-    }
   }
 });
 
@@ -220,14 +250,35 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
 
     <div class="row">
       <div class="left-col col-md-6">
-        <h4 class="mb-3">
-          Register
-          <span class="btn btn-sm" @click.prevent="generate_random">random</span>
-        </h4>
+        <h4 class="mb-3">Register</h4>
         <hr class="my-3" />
         <form>
+          <div class="col-12 mb-3" id="privkey-wrapper">
+            <label for="pubkey" class="form-label">
+              BLS Private Key
+              <span
+                class="btn btn-sm ms-2"
+                @click.prevent="generate_random_key"
+                v-if="bls != null"
+              >Generate Random Private Key</span>
+              <span
+                class="btn btn-sm ms-2"
+                @click.prevent="generate_pubkey_and_sign"
+                v-if="bls != null"
+              >Generate Public Key & Signature</span>
+            </label>
+            <textarea
+              type="text"
+              class="form-control"
+              id="privkey"
+              placeholder="0x..."
+              v-model="privkey"
+            />
+            <small>BLS private key of the ETH2 validator (32 bytes)</small>
+          </div>
+
           <div class="col-12 mb-3" id="pubkey-wrapper">
-            <label for="pubkey" class="form-label">Public Key</label>
+            <label for="pubkey" class="form-label">Please Verify Your Public Key</label>
             <textarea
               type="text"
               class="form-control"
@@ -235,28 +286,13 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
               placeholder="0x..."
               maxlength="48"
               v-model="pubkey"
+              disabled
             />
-            <div class="invalid-feedback">Please enter a valid public key.</div>
             <small>BLS public key of the ETH2 validator (48 bytes)</small>
           </div>
 
-          <div class="col-12 mb-3" id="secret-wrapper">
-            <label for="idCommitment" class="form-label">Secret</label>
-            <textarea
-              type="text"
-              class="form-control"
-              id="secret"
-              placeholder="0x...Not yet implemented"
-              maxlength="32"
-              v-model="secret"
-              disabled
-            />
-            <div class="invalid-feedback">Please enter a secret.</div>
-            <small>The secret will be hashed using the Posiedon Hash to generate the Identity Commitment</small>
-          </div>
-
           <div class="col-12 mb-3" id="idCommitment-wrapper">
-            <label for="idCommitment" class="form-label">Identity Commitment</label>
+            <label for="idCommitment" class="form-label">Generated Identity Commitment</label>
             <textarea
               type="text"
               class="form-control"
@@ -264,8 +300,8 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
               placeholder="0x..."
               maxlength="32"
               v-model="idCommitment"
+              disabled
             />
-            <div class="invalid-feedback">Please enter a Identity Commitment.</div>
             <small>Identity commitment of the ETH2 validator (32 bytes)</small>
           </div>
 
@@ -278,11 +314,11 @@ console.log("RLN Private Beacon Chain Validator Messaging App loaded");
               placeholder="0x..."
               maxlength="96"
               v-model="signature"
+              disabled
             />
-            <div class="invalid-feedback">Please enter a valid signature.</div>
             <small>
               BLS signature of the Identity Commitment generated by the BLS
-              public key (96 bytes)
+              private key (96 bytes)
             </small>
           </div>
 
@@ -486,5 +522,10 @@ label {
 }
 .btn:hover {
   background: var(--btnbg-hover);
+}
+
+.btn-sm {
+  font-size: 0.75rem;
+  letter-spacing: 0;
 }
 </style>

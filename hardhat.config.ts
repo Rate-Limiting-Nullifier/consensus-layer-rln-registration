@@ -78,7 +78,7 @@ const config: HardhatUserConfig = {
         deployments: 'deployments',
     },
     mocha: {
-        timeout: 0,
+        timeout: 100000,
     },
 };
 

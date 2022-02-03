@@ -11,7 +11,7 @@ class QueryGraph {
     async getRegistration(pubkey: string): Promise<any> {
         let query = gql`
             {
-                registrationEntities(first: 1, where: {pubkey: "${pubkey}"}) {
+                registrationEntities(where: {pubkey_contains: "${pubkey}"}) {
                     id
                     pubkey
                     idCommitment
@@ -19,25 +19,21 @@ class QueryGraph {
                 }
             }
         `;
-        console.log(query);
-        let result = await this.client.request(query);
-        console.log(result)
-        return result;
+        return await this.client.request(query);
     }
 
     async getAllRegistrations(): Promise<any> {
         let query = gql`
-        { registrationEntities() {
-            id
-            pubkey
-            idCommitment
-            signature
-        }}
+        {
+            registrationEntities(first: 5) {
+              id
+              pubkey
+              idCommitment
+              signature
+            }
+          }
         `;
-        console.log(query);
-        let result = await this.client.request(query);
-        console.log(result)
-        return result;
+        return await this.client.request(query);
     }
 }
 

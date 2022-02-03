@@ -13,18 +13,18 @@
     },
     "include": [
         "@/**/*.ts",
-        "./scripts",
-        "./deploy",
-        "./test",
-        "./typechain-types",
+        "./scripts/**/*.ts",
+        "./deploy/**/*.ts",
+        "./test/**/*.ts",
+        "./typechain-types/**/*.ts",
         "./client/src/**/*.ts",
         "./client/src/**/*.vue",
+        "client/test/*.ts",
     ],
     "files": [
         "./hardhat.config.ts"
     ],
     "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
+        "node_modules"
     ]
 }

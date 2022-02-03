@@ -3,11 +3,4 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
-    links:
-      - redis
-  redis:
-    image: redis
-    command: redis-server --save 60 1 --loglevel warning
-volumes:
-  logvolume01: {}
+      - "2601:2601"

@@ -3,6 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 const { VueLoaderPlugin } = require('vue-loader');
+const NodePolyfillPlugin = require("node-polyfill-webpack-plugin")
 
 const {
   NODE_ENV = 'production',
@@ -16,7 +17,7 @@ var config = {
 const serverConfig = Object.assign({}, config, {
   target: 'node',
   entry: {
-    server: './client/src/index.ts'
+    server: './client/src/server.ts'
   },
   node: {
     __dirname: false
@@ -92,6 +93,7 @@ const appConfig = Object.assign({}, config, {
         { from: "client/src/public/images", to: "images" },
       ],
     }),
+    new NodePolyfillPlugin()
   ]
 });
 

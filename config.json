@@ -1,0 +1,13 @@
+{
+    "network": {
+        "4": {
+            "name": "rinkeby",
+            "subgraph_endpoint": "https://api.studio.thegraph.com/query/20474/rln-registry/v0.0.1"
+        },
+        "31337": {
+            "name": "hardhat",
+            "subgraph_endpoint": "http://localhost:8000"
+        }
+    },
+    "default_network": "4"
+}
