@@ -18,7 +18,7 @@ const app = express();
 const PORT = 2601;
 
 // CORS Options for use in Express
-const allowedOrigins = [`http://localhost:{PORT}`];
+const allowedOrigins = [`http://localhost:${PORT}`];
 const options: cors.CorsOptions = {
     origin: allowedOrigins
 };
