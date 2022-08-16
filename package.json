@@ -15,10 +15,10 @@
         "contract:deploy": "npx hardhat deploy --network hardhat",
         "contract:node": "npm run contract:build && npx hardhat node",
         "client:build": "webpack --config ./client/webpack.config.js",
-        "client:devserver": "DEBUG=express:* nodemon --watch \"./client/dist/**/*\" --inspect --delay 1 ./client/dist/server.js",
+        "client:devserver": "DEBUG=express:* nodemon --watch \"./registry-client-server/dist/**/*\" --inspect --delay 1 ./registry-client-server/dist/server.js",
         "client:watch": "NODE_ENV=development npm run client:build",
-        "client:run": "node ./client/dist/server.js",
-        "client:test": "ts-mocha -p tsconfig.json ./client/test/*.ts --exit",
+        "client:run": "node ./registry-client-server/dist/server.js",
+        "client:test": "ts-mocha -p tsconfig.json ./registry-client-server/test/*.ts --exit",
         "docker:build": "docker build -t rln-client .",
         "build": "npm run contract:build && npm run contract:deploy && npm run client:build && npm run docker:build"
     },
