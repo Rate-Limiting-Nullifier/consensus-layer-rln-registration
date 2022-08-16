@@ -1,24 +1,22 @@
 # Private message sharing for ETH2 validators using the [RLN Construct](https://medium.com/privacy-scaling-explorations/rate-limiting-nullifier-a-spam-protection-mechanism-for-anonymous-environments-bbe4006a57d)
 
-💰 This work is sponsored by the Ethereum Foundation through a [grant](https://hackmd.io/BRda81jvTf6OC7HUYiYSvA).
-
 # Overview
 
 This project is broken down into multiple components:
 
 - Contract (`./contracts`): the code that runs on the Ethereum blockchain.
   - The deployment script(s) (`./deploy`): the scripts that deploy the contract to the Ethereum blockchain.
-  - Building and deploying the contract will also generate a number of files in the following directories:
+  - Building and deploying the contract will also generate several files in the following directories:
     - Building (Compiling):
       - `./artifacts`
       - `./typechain-types`
       - `./cache`
     - Coverage (Testing): `./coverage`
     - Deploying: `./deployments`
-- Client (`./client`): serves as the rln client and handles multiple tasks:
-  - Serves the frontend UI accessible at `http://localhost:2601/` by default
+- Client (`./registry-client`): serves as the RLN client and handles multiple tasks:
+  - Serves the frontend UI accessible at `http://localhost:2601/` which allows a user to register their identity commitment, and allows the user to verify other users' identity commitments.
   - Serves the Rest API `http://localhost:2601/api/v1/getRegistration/{public_key}` which queries the subgraph for the registration of a public key
-- Subgraph (`./subgraph`): the code that runs on The Graph and indexes the blockchain for rln registrations.
+- Subgraph (`./subgraph`): the code that runs on The Graph and indexes the blockchain for RLN registrations.
 
 This project also contains some infrustructure:
 
