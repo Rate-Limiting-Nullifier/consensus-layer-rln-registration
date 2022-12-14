@@ -42,7 +42,7 @@
         "cors": "^2.8.5",
         "dotenv": "^10.0.0",
         "ethers": "^5.5.4",
-        "express": "^4.17.2",
+        "express": "^4.17.3",
         "graphql": "^16.3.0",
         "graphql-request": "^4.0.0",
         "node-polyfill-webpack-plugin": "^1.1.4",
